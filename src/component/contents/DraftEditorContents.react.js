@@ -13,16 +13,11 @@
 
 'use strict';
 
-const DraftEditorBlock = require('DraftEditorBlock.react');
-const DraftOffsetKey = require('DraftOffsetKey');
+const DraftEditorBlocks = require('DraftEditorBlocks.react');
 const EditorState = require('EditorState');
 const React = require('React');
-
-const cx = require('cx');
-const joinClasses = require('joinClasses');
 const nullthrows = require('nullthrows');
 
-import type {BidiDirection} from 'UnicodeBidiDirection';
 import type ContentBlock from 'ContentBlock';
 
 type Props = {
@@ -94,6 +89,7 @@ class DraftEditorContents extends React.Component {
     const {
       blockRenderMap,
       blockRendererFn,
+      blockStyleFn,
       customStyleMap,
       customStyleFn,
       editorState,
@@ -232,34 +228,6 @@ class DraftEditorContents extends React.Component {
 
     return <div data-contents="true">{outputBlocks}</div>;
   }
-}
-
-/**
- * Provide default styling for list items. This way, lists will be styled with
- * proper counters and indentation even if the caller does not specify
- * their own styling at all. If more than five levels of nesting are needed,
- * the necessary CSS classes can be provided via `blockStyleFn` configuration.
- */
-function getListItemClasses(
-  type: string,
-  depth: number,
-  shouldResetCount: boolean,
-  direction: BidiDirection
-): string {
-  return cx({
-    'public/DraftStyleDefault/unorderedListItem':
-      type === 'unordered-list-item',
-    'public/DraftStyleDefault/orderedListItem':
-      type === 'ordered-list-item',
-    'public/DraftStyleDefault/reset': shouldResetCount,
-    'public/DraftStyleDefault/depth0': depth === 0,
-    'public/DraftStyleDefault/depth1': depth === 1,
-    'public/DraftStyleDefault/depth2': depth === 2,
-    'public/DraftStyleDefault/depth3': depth === 3,
-    'public/DraftStyleDefault/depth4': depth === 4,
-    'public/DraftStyleDefault/listLTR': direction === 'LTR',
-    'public/DraftStyleDefault/listRTL': direction === 'RTL',
-  });
 }
 
 module.exports = DraftEditorContents;

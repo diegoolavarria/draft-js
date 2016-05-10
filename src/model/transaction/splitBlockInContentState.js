@@ -36,6 +36,7 @@ function splitBlockInContentState(
   var offset = selectionState.getAnchorOffset();
   var blockMap = contentState.getBlockMap();
   var blockToSplit = blockMap.get(key);
+  var parentKey = blockToSplit.getParentKey();
 
   var text = blockToSplit.getText();
   var chars = blockToSplit.getCharacterList();
@@ -46,6 +47,10 @@ function splitBlockInContentState(
   });
 
   var keyBelow = generateRandomKey();
+  if (parentKey) {
+    keyBelow = parentKey + '/' + keyBelow;
+  }
+
   var blockBelow = blockAbove.merge({
     key: keyBelow,
     text: text.slice(offset),

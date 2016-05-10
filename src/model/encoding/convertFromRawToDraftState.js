@@ -76,6 +76,8 @@ function convertFromRawToDraftState(
     }
   );
 
+  var contentBlocks = convertBlocksFromRaw(blocks, fromStorageToLocal);
+
   return ContentState.createFromBlockArray(contentBlocks);
 }
 
