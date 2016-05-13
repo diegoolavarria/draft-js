@@ -78,6 +78,8 @@ function convertFromRawToDraftState(
 
   var contentBlocks = convertBlocksFromRaw(blocks, fromStorageToLocal);
 
+  console.log(JSON.stringify(contentBlocks, null, 2));
+
   return ContentState.createFromBlockArray(contentBlocks);
 }
 
