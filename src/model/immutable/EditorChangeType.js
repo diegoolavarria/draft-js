@@ -29,5 +29,6 @@ export type EditorChangeType = (
   'remove-range' |
   'spellcheck-change' |
   'split-block' |
+  'split-nested-block' |
   'undo'
 );
