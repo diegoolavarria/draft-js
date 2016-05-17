@@ -16,6 +16,7 @@ var ContentBlock = require('ContentBlock');
 var ContentState = require('ContentState');
 var DraftEntity = require('DraftEntity');
 
+var DefaultDraftBlockRenderMap = require('DefaultDraftBlockRenderMap');
 var createCharacterList = require('createCharacterList');
 var decodeEntityRanges = require('decodeEntityRanges');
 var decodeInlineStyleRanges = require('decodeInlineStyleRanges');
@@ -23,6 +24,7 @@ var generateRandomKey = require('generateRandomKey');
 var Immutable = require('immutable');
 
 import type {RawDraftContentState} from 'RawDraftContentState';
+import type {DraftBlockRenderMap} from 'DraftBlockRenderMap';
 
 var {Map} = Immutable;
 
@@ -76,7 +78,7 @@ function convertFromRawToDraftState(
     }
   );
 
-  var contentBlocks = convertBlocksFromRaw(blocks, fromStorageToLocal);
+  var contentBlocks = convertBlocksFromRaw(blocks, fromStorageToLocal, blockRenderMap);
 
   console.log(JSON.stringify(contentBlocks, null, 2));
 
