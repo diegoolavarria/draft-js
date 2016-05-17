@@ -19,6 +19,7 @@ var encodeInlineStyleRanges = require('encodeInlineStyleRanges');
 
 import type ContentState from 'ContentState';
 import type {RawDraftContentState} from 'RawDraftContentState';
+import type {RawDraftContentBlock} from 'RawDraftContentBlock';
 
 function convertFromDraftStateToRaw(
   contentState: ContentState
@@ -27,7 +28,11 @@ function convertFromDraftStateToRaw(
   var entityStorageMap = {};
   var rawBlocks = [];
 
-  contentState.getBlockMap().forEach((block, blockKey) => {
+  function convertBlockFromDraftToRaw(
+    block: ContentBlock
+  ) : RawDraftContentBlock {
+    var innerRawBlocks = [];
+
     block.findEntityRanges(
       character => character.getEntity() !== null,
       start => {
@@ -41,8 +46,12 @@ function convertFromDraftStateToRaw(
       }
     );
 
-    rawBlocks.push({
-      key: blockKey,
+    contentState.getBlockChildren(block.getKey()).forEach((innerBlock) => {
+      innerRawBlocks.push(convertBlockFromDraftToRaw(innerBlock));
+    });
+
+    return {
+      key: block.getInnerKey(),
       text: block.getText(),
       type: block.getType(),
       depth: block.getDepth(),
