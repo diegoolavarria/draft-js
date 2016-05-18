@@ -106,6 +106,7 @@ function getEmptyChunk(): Chunk {
     inlines: [],
     entities: [],
     blocks: [],
+    keys: []
   };
 }
 
@@ -119,6 +120,7 @@ function getWhitespaceChunk(inEntity: ?string): Chunk {
     inlines: [OrderedSet()],
     entities,
     blocks: [],
+    keys: []
   };
 }
 
@@ -128,10 +130,11 @@ function getSoftNewlineChunk(): Chunk {
     inlines: [OrderedSet()],
     entities: new Array(1),
     blocks: [],
+    keys: []
   };
 }
 
-function getBlockDividerChunk(block: DraftBlockType, depth: number): Chunk {
+function getBlockDividerChunk(block: DraftBlockType, depth: number, key=generateRandomKey(): string): Chunk {
   return {
     text: '\r',
     inlines: [OrderedSet()],
@@ -140,6 +143,7 @@ function getBlockDividerChunk(block: DraftBlockType, depth: number): Chunk {
       type: block,
       depth: Math.max(0, Math.min(MAX_DEPTH, depth)),
     }],
+    keys: key ? [key] : [],
   };
 }
 
@@ -267,7 +271,7 @@ function processInlineTag(
   return currentStyle;
 }
 
-function joinChunks(A: Chunk, B: Chunk): Chunk {
+function joinChunks(A: Chunk, B: Chunk, hasNestedBlock:boolean=false): Chunk {
   // Sometimes two blocks will touch in the DOM and we need to strip the
   // extra delimiter to preserve niceness.
   var lastInA = A.text.slice(-1);
@@ -275,12 +279,14 @@ function joinChunks(A: Chunk, B: Chunk): Chunk {
 
   if (
     lastInA === '\r' &&
-    firstInB === '\r'
+    firstInB === '\r' &&
+    !hasNestedBlock
   ) {
     A.text = A.text.slice(0, -1);
     A.inlines.pop();
     A.entities.pop();
     A.blocks.pop();
+    A.keys.pop();
   }
 
   // Kill whitespace after blocks
@@ -301,6 +307,7 @@ function joinChunks(A: Chunk, B: Chunk): Chunk {
     inlines: A.inlines.concat(B.inlines),
     entities: A.entities.concat(B.entities),
     blocks: A.blocks.concat(B.blocks),
+    keys: A.keys.concat(B.keys)
   };
 }
 
@@ -429,18 +436,19 @@ function genFragment(
     lastList = nodeName;
   }
 
-  // Block Tags
-  if (!inBlock && blockTags.indexOf(nodeName) !== -1) {
+  if ((!inBlock || isNestedElement) && blockTags.indexOf(nodeName) !== -1) {
     chunk = getBlockDividerChunk(
       getBlockTypeForTag(nodeName, lastList, blockRenderMap),
-      depth
+      depth,
+      blockKey
     );
     inBlock = nodeName;
-    newBlock = true;
+    newBlock = true;//!isNestedElement;
   } else if (lastList && inBlock === 'li' && nodeName === 'li') {
     chunk = getBlockDividerChunk(
       getBlockTypeForTag(nodeName, lastList, blockRenderMap),
-      depth
+      depth,
+      blockKey
     );
     inBlock = nodeName;
     newBlock = true;
@@ -493,7 +501,8 @@ function genFragment(
       blockTags,
       depth,
       blockRenderMap,
-      entityId || inEntity
+      entityId || inEntity,
+      chunkKey
     );
 
     newChunk = generatedChunk;
@@ -519,7 +528,7 @@ function genFragment(
   if (newBlock) {
     chunk = joinChunks(
       chunk,
-      getBlockDividerChunk(nextBlockType, depth)
+      getBlockDividerChunk(nextBlockType, depth, blockKey ? blockKey + '/' + generateRandomKey() : generateRandomKey())
     );
   }
 
@@ -578,6 +587,7 @@ function getChunkForHTML(
       inlines: chunk.inlines.slice(1),
       entities: chunk.entities.slice(1),
       blocks: chunk.blocks,
+      keys: chunk.keys
     };
   }
 
