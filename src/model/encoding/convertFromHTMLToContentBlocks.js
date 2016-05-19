@@ -134,7 +134,7 @@ function getSoftNewlineChunk(): Chunk {
   };
 }
 
-function getBlockDividerChunk(block: DraftBlockType, depth: number, key=generateRandomKey(): string): Chunk {
+function getBlockDividerChunk(block: DraftBlockType, depth: number, key: string = generateRandomKey()): Chunk {
   return {
     text: '\r',
     inlines: [OrderedSet()],

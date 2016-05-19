@@ -33,6 +33,7 @@ const nullthrows = require('nullthrows');
 
 import type {BidiDirection} from 'UnicodeBidiDirection';
 import type {DraftDecoratorType} from 'DraftDecoratorType';
+import type {BlockMap} from 'BlockMap';
 import type {List} from 'immutable';
 
 const SCROLL_BUFFER = 10;
@@ -202,27 +203,26 @@ class DraftEditorBlock extends React.Component {
     }).toArray();
   }
 
-  _renderBlockMap(): React.Element {
-    var {getBlockChildren, block} = this.props;
+  _renderBlockMap(
+    blocks: BlockMap
+  ): React.Element {
     var DraftEditorBlocks = this.props.DraftEditorBlocks;
-
-    var blocks = getBlockChildren(block.getKey());
-
     return <DraftEditorBlocks {...this.props} blocksAsArray={blocks.valueSeq().toArray()} />;
   }
 
   render(): React.Element<any> {
-    const {direction, offsetKey} = this.props;
+    const {direction, offsetKey, getBlockChildren, block} = this.props;
     const className = cx({
       'public/DraftStyleDefault/block': true,
       'public/DraftStyleDefault/ltr': direction === 'LTR',
       'public/DraftStyleDefault/rtl': direction === 'RTL',
     });
 
+    const nestedBlocks = getBlockChildren(block.getKey());
+
     return (
       <div data-offset-key={offsetKey} className={className}>
-        {this._renderChildren()}
-        {this._renderBlockMap()}
+        {nestedBlocks.size > 0? this._renderBlockMap(nestedBlocks) : this._renderChildren()}
       </div>
     );
   }
