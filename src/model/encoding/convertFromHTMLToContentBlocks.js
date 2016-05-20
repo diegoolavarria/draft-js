@@ -34,9 +34,15 @@ import type {DraftBlockType} from 'DraftBlockType';
 import type {DraftInlineStyle} from 'DraftInlineStyle';
 import type {EntityMap} from 'EntityMap';
 
+const flatten = list => list.reduce(
+    (a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), []
+);
+
+
 var {
   List,
   OrderedSet,
+  Repeat,
 } = Immutable;
 
 var NBSP = '&nbsp;';
@@ -181,21 +187,23 @@ function getBlockMapSupportedTags(
 
 // custom element conversions
 function getMultiMatchedType(
-  tag: string,
+  tag: ?string,
   lastList: ?string,
   multiMatchExtractor: Array<Function>
 ): ?DraftBlockType {
-  for (let ii = 0; ii < multiMatchExtractor.length; ii++) {
-    const matchType = multiMatchExtractor[ii](tag, lastList);
-    if (matchType) {
-      return matchType;
+  if (tag) {
+    for (let ii = 0; ii < multiMatchExtractor.length; ii++) {
+      const matchType = multiMatchExtractor[ii](tag, lastList);
+      if (matchType) {
+        return matchType;
+      }
     }
   }
   return null;
 }
 
 function getBlockTypeForTag(
-  tag: string,
+  tag: ?string,
   lastList: ?string,
   blockRenderMap: DraftBlockRenderMap
 ): DraftBlockType {
@@ -387,7 +395,7 @@ function genFragment(
       lastLastBlock === 'br' &&
       (
         !inBlock ||
-        getBlockTypeForTag(inBlock, lastList, blockRenderMap) === 'unstyled'
+        inBlockType === 'unstyled'
       )
     ) {
       return {chunk: getBlockDividerChunk('unstyled', depth), entityMap};
@@ -429,29 +437,32 @@ function genFragment(
   inlineStyle = processInlineTag(nodeName, node, inlineStyle);
 
   // Handle lists
-  if (nodeName === 'ul' || nodeName === 'ol') {
+  if (isListContainer) {
     if (lastList) {
       depth += 1;
     }
     lastList = nodeName;
   }
 
-  if ((!inBlock || isNestedElement) && blockTags.indexOf(nodeName) !== -1) {
+  var blockType = getBlockTypeForTag(nodeName, lastList, blockRenderMap);
+  var inBlockConfig = blockRenderMap.get(inBlockType);
+
+  if ((!inBlock || inBlockConfig.nestingEnabled) && blockTags.indexOf(nodeName) !== -1) {
     chunk = getBlockDividerChunk(
-      getBlockTypeForTag(nodeName, lastList, blockRenderMap),
+      blockType,
       depth,
       blockKey
     );
     inBlock = nodeName;
-    newBlock = true;//!isNestedElement;
+    newBlock = !inBlockConfig.nestingEnabled;
   } else if (lastList && inBlock === 'li' && nodeName === 'li') {
     chunk = getBlockDividerChunk(
-      getBlockTypeForTag(nodeName, lastList, blockRenderMap),
+      blockType,
       depth,
       blockKey
     );
     inBlock = nodeName;
-    newBlock = true;
+    newBlock = !inBlockConfig.nestingEnabled;
     nextBlockType = lastList === 'ul' ?
       'unordered-list-item' :
       'ordered-list-item';
@@ -515,7 +526,8 @@ function genFragment(
     if (
       sibling &&
       blockTags.indexOf(nodeName) >= 0 &&
-      inBlock
+      inBlock &&
+      isValidBlock && chunkKey.split('/').length === 1 // not nested element or invalid
     ) {
       chunk = joinChunks(chunk, getSoftNewlineChunk());
     }
@@ -528,7 +540,12 @@ function genFragment(
   if (newBlock) {
     chunk = joinChunks(
       chunk,
-      getBlockDividerChunk(nextBlockType, depth, blockKey ? blockKey + '/' + generateRandomKey() : generateRandomKey())
+      getBlockDividerChunk(
+        nextBlockType,
+        depth,
+        blockKey ? blockKey + '/' + generateRandomKey() : generateRandomKey(),
+        !!blockKey
+      )
     );
   }
 

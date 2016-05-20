@@ -25,6 +25,7 @@ var Immutable = require('immutable');
 
 import type {RawDraftContentState} from 'RawDraftContentState';
 import type {DraftBlockRenderMap} from 'DraftBlockRenderMap';
+import type {RawDraftContentBlock} from 'RawDraftContentBlock';
 
 var {Map} = Immutable;
 
