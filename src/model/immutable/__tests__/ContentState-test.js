@@ -26,6 +26,13 @@ var MULTI_BLOCK = [
   {text: 'Four score', key: 'b'},
   {text: 'and seven', key: 'c'},
 ];
+var NESTED_BLOCK = [
+  {text: 'Four score', key: 'd'},
+  {text: 'and seven', key: 'e'},
+  {text: 'Nested in e', key: 'e/f'},
+  {text: 'Nested in e', key: 'e/g'},
+  {text: 'Nested in e/g', key: 'e/g/h'},
+];
 
 var SelectionState = require('SelectionState');
 
