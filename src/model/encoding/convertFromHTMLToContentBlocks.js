@@ -447,25 +447,29 @@ function genFragment(
   var blockType = getBlockTypeForTag(nodeName, lastList, blockRenderMap);
   var inBlockConfig = blockRenderMap.get(inBlockType);
 
-  if ((!inBlock || inBlockConfig.nestingEnabled) && blockTags.indexOf(nodeName) !== -1) {
+  if (lastList && inBlock === 'li' && nodeName === 'li') {
     chunk = getBlockDividerChunk(
       blockType,
       depth,
       blockKey
     );
-    inBlock = nodeName;
     newBlock = !inBlockConfig.nestingEnabled;
-  } else if (lastList && inBlock === 'li' && nodeName === 'li') {
-    chunk = getBlockDividerChunk(
-      blockType,
-      depth,
-      blockKey
-    );
     inBlock = nodeName;
-    newBlock = !inBlockConfig.nestingEnabled;
+    //blockType = getBlockTypeForTag(inBlock, lastList, blockRenderMap);
+    //inBlockConfig = blockRenderMap.get(blockType);
     nextBlockType = lastList === 'ul' ?
       'unordered-list-item' :
       'ordered-list-item';
+  } else if ((!inBlock || inBlockConfig.nestingEnabled) && blockTags.indexOf(nodeName) !== -1) {
+    chunk = getBlockDividerChunk(
+      blockType,
+      depth,
+      blockKey
+    );
+    newBlock = !inBlockConfig.nestingEnabled;
+    inBlock = nodeName;
+    //blockType = getBlockTypeForTag(inBlock, lastList, blockRenderMap);
+    //inBlockConfig = blockRenderMap.get(blockType);
   }
 
   // Recurse through children
@@ -525,9 +529,9 @@ function genFragment(
     // Put in a newline to break up blocks inside blocks
     if (
       sibling &&
-      blockTags.indexOf(nodeName) >= 0 &&
       inBlock &&
-      isValidBlock && chunkKey.split('/').length === 1 // not nested element or invalid
+      isValidBlock &&
+      chunkKey.split('/').length === 1 // not nested element or invalid
     ) {
       chunk = joinChunks(chunk, getSoftNewlineChunk());
     }
@@ -538,13 +542,13 @@ function genFragment(
   }
 
   if (newBlock) {
+    chunkKey = blockKey ? blockKey + '/' + generateRandomKey() : generateRandomKey();
     chunk = joinChunks(
       chunk,
       getBlockDividerChunk(
         nextBlockType,
         depth,
-        blockKey ? blockKey + '/' + generateRandomKey() : generateRandomKey(),
-        !!blockKey
+        chunkKey
       )
     );
   }
@@ -595,7 +599,6 @@ function getChunkForHTML(
     -1,
     blockRenderMap
   );
-
 
   // join with previous block to prevent weirdness on paste
   if (chunk.text.indexOf('\r') === 0) {

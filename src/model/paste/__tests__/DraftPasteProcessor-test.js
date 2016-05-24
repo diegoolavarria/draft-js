@@ -535,19 +535,17 @@ describe('DraftPasteProcessor when nesting support is enabled', function() {
     );
 
     assertBlockIsChildrenOf(output[1], output[0]);
-    assertBlockIsChildrenOf(output[2], output[1]);
 
     assertBlockTypes(output, [
       'blockquote',
-      'header-one',
-      'unstyled',
+      'header-one'
     ]);
   });
 
-  it('leaft block should wrap text on unstyled block', function() {
+  it('leaft with text and blocks should wrap text on unstyled', function() {
     var nestingText = 'nesting enabled block';
     var html = `
-      <li>${nestingText}</li>
+      <li>${nestingText}<h1>foo</h1></li>
     `;
 
     var output = DraftPasteProcessor.processHTML(
@@ -560,7 +558,8 @@ describe('DraftPasteProcessor when nesting support is enabled', function() {
 
     assertBlockTypes(output, [
       'unordered-list-item',
-      'unstyled'
+      'unstyled',
+      'header-one'
     ]);
 
     assertBlockIsChildrenOf(unstyledBlock, listBlock);
