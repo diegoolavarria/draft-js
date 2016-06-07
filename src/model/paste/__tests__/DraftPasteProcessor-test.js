@@ -38,9 +38,6 @@ var CUSTOM_BLOCK_MAP = Immutable.Map({
   'code-block': {
     element: 'pre',
   },
-  'paragraph': {
-    element: 'p',
-  },
   'unstyled': {
     element: 'div',
   },
@@ -70,6 +67,14 @@ function assertDepths(blocks, comparison) {
 function assertBlockTypes(blocks, comparison) {
   expect(
     blocks.map(b => b.getType())
+  ).toEqual(
+    comparison
+  );
+}
+
+function assertBlockTexts(blocks, comparison) {
+  expect(
+    blocks.map(b => b.getText().trim())
   ).toEqual(
     comparison
   );
@@ -238,8 +243,8 @@ describe('DraftPasteProcessor', function() {
     var html = '<div><p>hi</p><p>hello</p></div>';
     var {contentBlocks: output} = DraftPasteProcessor.processHTML(html, CUSTOM_BLOCK_MAP);
     assertBlockTypes(output, [
-      'paragraph',
-      'paragraph',
+      'unstyled',
+      'unstyled',
     ]);
   });
 
@@ -565,5 +570,71 @@ describe('DraftPasteProcessor when nesting support is enabled', function() {
     assertBlockIsChildrenOf(unstyledBlock, listBlock);
 
     expect(unstyledBlock.getText()).toBe(nestingText);
+  });
+
+  it('should create multiple nesting sibblings', function() {
+    var html = `
+    <h1>Draft.js tree PR demo</h1>
+    <p>This website is a very simple demo of Draft.js working with a Tree data structure.</p>
+    <ul>
+      <li>
+        <h3>Why a Tree data structure</h3>
+        <p>It allows the use of nested blocks inside lists / blockquotes / etc</p>
+      </li>
+      <li>
+        <h3>How to test it?</h3>
+        <p>You can change the input HTML in the textarea below.</p>
+      </li>
+    </ul>
+    `;
+
+    var output = DraftPasteProcessor.processHTML(
+      html,
+      nestingEnabledBlockRenderMap
+    );
+
+    assertBlockTypes(output, [
+      'header-one',
+      'unstyled',
+      'unordered-list-item',
+      'header-three',
+      'unstyled',
+      'unordered-list-item',
+      'header-three',
+      'unstyled'
+    ]);
+  });
+
+  it('should create multiple nesting sibblings and retain their text', function() {
+    var html = `
+    <h1>Draft.js tree PR demo</h1>
+		<p>This website is a very simple demo of Draft.js working with a Tree data structure.</p>
+		<ul>
+			<li>
+				<h3>Why a Tree data structure</h3>
+				<p>It allows the use of nested blocks inside lists / blockquotes / etc</p>
+			</li>
+			<li>
+				<h3>How to test it?</h3>
+				<p>You can change the input HTML in the textarea below.</p>
+			</li>
+		</ul>
+    `;
+
+    var output = DraftPasteProcessor.processHTML(
+      html,
+      nestingEnabledBlockRenderMap
+    );
+
+    assertBlockTexts(output, [
+      'Draft.js tree PR demo',
+      'This website is a very simple demo of Draft.js working with a Tree data structure.',
+      '',
+      'Why a Tree data structure',
+      'It allows the use of nested blocks inside lists / blockquotes / etc',
+      '',
+      'How to test it?',
+      'You can change the input HTML in the textarea below.'
+    ]);
   });
 });

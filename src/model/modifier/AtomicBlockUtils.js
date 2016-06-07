@@ -22,6 +22,8 @@ const SelectionState = require('SelectionState');
 const Immutable = require('immutable');
 
 const generateRandomKey = require('generateRandomKey');
+const generateNestedKey = require('generateNestedKey');
+
 const moveBlockInContentState = require('moveBlockInContentState');
 
 import type {DraftInsertionType} from 'DraftInsertionType';
@@ -39,6 +41,9 @@ const AtomicBlockUtils = {
   ): EditorState {
     const contentState = editorState.getCurrentContent();
     const selectionState = editorState.getSelection();
+    const targetKey = selectionState.getStartKey();
+    const targetBlock = contentState.getBlockForKey(targetKey);
+    const targetBlockParentKey = targetBlock.getParentKey();
 
     const afterRemoval = DraftModifier.removeRange(
       contentState,
@@ -60,13 +65,13 @@ const AtomicBlockUtils = {
 
     const fragmentArray = [
       new ContentBlock({
-        key: generateRandomKey(),
+        key: targetBlockParentKey ? generateNestedKey(targetBlockParentKey) : generateRandomKey(),
         type: 'atomic',
         text: character,
         characterList: List(Repeat(charData, character.length)),
       }),
       new ContentBlock({
-        key: generateRandomKey(),
+        key: targetBlockParentKey ? generateNestedKey(targetBlockParentKey) : generateRandomKey(),
         type: 'unstyled',
         text: '',
         characterList: List(),

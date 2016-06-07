@@ -20,6 +20,7 @@ const DraftEntity = require('DraftEntity');
 const Immutable = require('immutable');
 const URI = require('URI');
 
+const generateNestedKey = require('generateNestedKey');
 const generateRandomKey = require('generateRandomKey');
 const getSafeBodyFromHTML = require('getSafeBodyFromHTML');
 const invariant = require('invariant');
@@ -33,11 +34,6 @@ import type {DraftBlockRenderConfig} from 'DraftBlockRenderConfig';
 import type {DraftBlockType} from 'DraftBlockType';
 import type {DraftInlineStyle} from 'DraftInlineStyle';
 import type {EntityMap} from 'EntityMap';
-
-const flatten = list => list.reduce(
-    (a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), []
-);
-
 
 var {
   List,
@@ -166,6 +162,7 @@ function getListBlockType(
 function getBlockMapSupportedTags(
   blockRenderMap: DraftBlockRenderMap
 ): Array<string> {
+  // Some blocks must be treated as unstyled when not present on the blockRenderMap
   const unstyledElement = blockRenderMap.get('unstyled').element;
   let tags = new Set([]);
 
@@ -455,8 +452,6 @@ function genFragment(
     );
     newBlock = !inBlockConfig.nestingEnabled;
     inBlock = nodeName;
-    //blockType = getBlockTypeForTag(inBlock, lastList, blockRenderMap);
-    //inBlockConfig = blockRenderMap.get(blockType);
     nextBlockType = lastList === 'ul' ?
       'unordered-list-item' :
       'ordered-list-item';
@@ -468,8 +463,6 @@ function genFragment(
     );
     newBlock = !inBlockConfig.nestingEnabled;
     inBlock = nodeName;
-    //blockType = getBlockTypeForTag(inBlock, lastList, blockRenderMap);
-    //inBlockConfig = blockRenderMap.get(blockType);
   }
 
   // Recurse through children
@@ -542,7 +535,7 @@ function genFragment(
   }
 
   if (newBlock) {
-    chunkKey = blockKey ? blockKey + '/' + generateRandomKey() : generateRandomKey();
+    chunkKey = blockKey && hasNestingEnabled ? generateNestedKey(blockKey) : generateRandomKey();
     chunk = joinChunks(
       chunk,
       getBlockDividerChunk(

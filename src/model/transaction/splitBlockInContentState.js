@@ -46,10 +46,7 @@ function splitBlockInContentState(
     characterList: chars.slice(0, offset),
   });
 
-  var keyBelow = generateRandomKey();
-  if (parentKey) {
-    keyBelow = parentKey + '/' + keyBelow;
-  }
+  var keyBelow = parentKey ? generateNestedKey(parentKey) : generateRandomKey();
 
   var blockBelow = blockAbove.merge({
     key: keyBelow,
