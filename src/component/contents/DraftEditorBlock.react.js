@@ -219,7 +219,7 @@ class DraftEditorBlock extends React.Component {
     blocks: BlockMap
   ): React.Element {
     var DraftEditorBlocks = this.props.DraftEditorBlocks;
-    return <DraftEditorBlocks {...this.props} blocksAsArray={blocks.valueSeq().toArray()} />;
+    return <DraftEditorBlocks {...this.props} blockMap={blocks} />;
   }
 
   render(): React.Element<any> {
@@ -230,7 +230,7 @@ class DraftEditorBlock extends React.Component {
       'public/DraftStyleDefault/rtl': direction === 'RTL',
     });
 
-    const nestedBlocks = getBlockChildren ? getBlockChildren(block.getKey()) : [];
+    const nestedBlocks = getBlockChildren(block.getKey());
 
     // Render nested blocks or text but never both at the same time.
     return (
