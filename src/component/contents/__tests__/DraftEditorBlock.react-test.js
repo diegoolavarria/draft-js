@@ -100,6 +100,7 @@ function getSelection() {
 
 function getProps(block, decorator) {
   return {
+    blockMapTree: new Immutable.Map(),
     block,
     tree: BlockTree.generate(ContentState.createFromText(''), block, decorator),
     selection: getSelection(),
