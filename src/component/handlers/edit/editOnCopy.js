@@ -31,7 +31,7 @@ function editOnCopy(editor: DraftEditor, e: SyntheticClipboardEvent): void {
     return;
   }
 
-  editor.setClipboard(getFragmentFromSelection(editor._latestEditorState));
+  editor.setClipboard(getFragmentFromSelection(editor._latestEditorState), e);
 }
 
 module.exports = editOnCopy;

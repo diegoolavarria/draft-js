@@ -34,7 +34,6 @@ import type {EntityMap} from 'EntityMap';
 function editOnPaste(editor: DraftEditor, e: SyntheticClipboardEvent): void {
   e.preventDefault();
   var data = new DataTransfer(e.clipboardData);
-
   // Get files, unless this is likely to be a string the user wants inline.
   if (!data.isRichText()) {
     var files = data.getFiles();
@@ -102,6 +101,17 @@ function editOnPaste(editor: DraftEditor, e: SyntheticClipboardEvent): void {
     textBlocks = splitTextIntoTextBlocks(text);
   }
 
+  const internalClipboard = editor.getClipboard(e);
+
+  if (data && Array.isArray(data.types) && data.types.indexOf('text/draft') !== -1) {
+    editor.update(
+      insertFragment(editor._latestEditorState, internalClipboard)
+    );
+
+    return;
+  }
+
+
   if (!editor.props.stripPastedStyles) {
     // If the text from the paste event is rich content that matches what we
     // already have on the internal clipboard, assume that we should just use
@@ -110,7 +120,6 @@ function editOnPaste(editor: DraftEditor, e: SyntheticClipboardEvent): void {
     // stripped during comparison -- this is because copy/paste within the
     // editor in Firefox and IE will not include empty lines. The resulting
     // paste will preserve the newlines correctly.
-    const internalClipboard = editor.getClipboard();
     if (data.isRichText() && internalClipboard) {
       if (
         // If the editorKey is present in the pasted HTML, it should be safe to

@@ -46,7 +46,7 @@ function editOnCut(editor: DraftEditor, e: SyntheticClipboardEvent): void {
   const {x, y} = getScrollPosition(scrollParent);
 
   const fragment = getFragmentFromSelection(editorState);
-  editor.setClipboard(fragment);
+  editor.setClipboard(fragment, e);
 
   // Set `cut` mode to disable all event handling temporarily.
   editor.setMode('cut');

@@ -34,6 +34,8 @@ const generateRandomKey = require('generateRandomKey');
 const getDefaultKeyBinding = require('getDefaultKeyBinding');
 const nullthrows = require('nullthrows');
 const getScrollPosition = require('getScrollPosition');
+const setFragmentToClipboard = require('setFragmentToClipboard');
+const getFragmentFromClipboard = require('getFragmentFromClipboard');
 
 import type {BlockMap} from 'BlockMap';
 import type {DraftEditorModes} from 'DraftEditorModes';
@@ -118,8 +120,8 @@ class DraftEditor extends React.Component {
   setMode: (mode: DraftEditorModes) => void;
   exitCurrentMode: () => void;
   restoreEditorDOM: (scrollPosition?: DraftScrollPosition) => void;
-  setClipboard: (clipboard?: BlockMap) => void;
-  getClipboard: () => ?BlockMap;
+  setClipboard: (blockMap?: BlockMap, e: ?SyntheticClipboardEvent) => void;
+  getClipboard: (e: ?SyntheticClipboardEvent) => ?BlockMap;
   getEditorKey: () => string;
   update: (editorState: EditorState) => void;
   onDragEnter: () => void;
@@ -399,8 +401,8 @@ class DraftEditor extends React.Component {
    *
    * Set the clipboard state for a cut/copy event.
    */
-  _setClipboard(clipboard: ?BlockMap): void {
-    this._clipboard = clipboard;
+  _setClipboard(blockMap: ?BlockMap, e: ?SyntheticClipboardEvent): void {
+    this._clipboard = setFragmentToClipboard(blockMap, e);
   }
 
   /**
@@ -408,7 +410,12 @@ class DraftEditor extends React.Component {
    *
    * Retrieve the clipboard state for a cut/copy event.
    */
-  _getClipboard(): ?BlockMap {
+  _getClipboard(e: ?SyntheticClipboardEvent): ?BlockMap {
+    // if we have a clipboard event we attempt to update our internal cliboard
+    if (e) {
+      this._clipboard = getFragmentFromClipboard(e) || this._clipboard;
+    }
+
     return this._clipboard;
   }
 
