@@ -26,50 +26,50 @@ const PRE_WRAP = <pre className={cx('public/DraftStyleDefault/pre')} />;
 const DefaultDraftBlockRenderMap: DraftBlockRenderMap = Map({
   'header-one': {
     element: 'h1',
-    nestingEnabled: false
+    nestingEnabled: false,
   },
   'header-two': {
     element: 'h2',
-    nestingEnabled: false
+    nestingEnabled: false,
   },
   'header-three': {
     element: 'h3',
-    nestingEnabled: false
+    nestingEnabled: false,
   },
   'header-four': {
     element: 'h4',
-    nestingEnabled: false
+    nestingEnabled: false,
   },
   'header-five': {
     element: 'h5',
-    nestingEnabled: false
+    nestingEnabled: false,
   },
   'header-six': {
     element: 'h6',
-    nestingEnabled: false
+    nestingEnabled: false,
   },
   'unordered-list-item': {
     element: 'li',
     wrapper: UL_WRAP,
-    nestingEnabled: false
+    nestingEnabled: false,
   },
   'ordered-list-item': {
     element: 'li',
     wrapper: OL_WRAP,
-    nestingEnabled: false
+    nestingEnabled: false,
   },
   'blockquote': {
     element: 'blockquote',
-    nestingEnabled: false
+    nestingEnabled: false,
   },
   'atomic': {
     element: 'figure',
-    nestingEnabled: false
+    nestingEnabled: false,
   },
   'code-block': {
     element: 'pre',
     wrapper: PRE_WRAP,
-    nestingEnabled: false
+    nestingEnabled: false,
   },
   'unstyled': {
     element: 'div',

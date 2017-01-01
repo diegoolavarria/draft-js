@@ -92,6 +92,35 @@ function assertBlockIsChildrenOf(block, comparison) {
 }
 
 describe('DraftPasteProcessor', function() {
+  function assertInlineStyles(block, comparison) {
+    var styles = block.getCharacterList().map(c => c.getStyle());
+    expect(styles.toJS()).toEqual(comparison);
+  }
+
+  // Don't want to couple this to a specific way of generating entity IDs so
+  // just checking their existence
+  function assertEntities(block, comparison) {
+    var entities = block.getCharacterList().map(c => c.getEntity());
+    entities.toJS().forEach((entity, ii) => {
+      expect(comparison[ii]).toBe(!!entity);
+    });
+  }
+
+  function assertDepths(blocks, comparison) {
+    expect(
+      blocks.map(b => b.getDepth())
+    ).toEqual(
+      comparison
+    );
+  }
+
+  function assertBlockTypes(blocks, comparison) {
+    expect(
+      blocks.map(b => b.getType())
+    ).toEqual(
+      comparison
+    );
+  }
 
   function assertInlineStyles(block, comparison) {
     var styles = block.getCharacterList().map(c => c.getStyle());
