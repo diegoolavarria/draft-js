@@ -1,4 +1,4 @@
-**
+/**
  * Copyright 2004-present Facebook. All Rights Reserved.
  *
  * @providesModule DraftJsPlaygroundContainer.react
@@ -124,9 +124,7 @@ class DraftJsPlaygroundContainer extends Component<Props, State> {
       <div className={cx('DraftJsPlaygroundContainer/container')}>
         <div className={cx('DraftJsPlaygroundContainer/column')}>
           <div className={cx('DraftJsPlaygroundContainer/controls')}>
-            <SomeSelector
-              onChange={this.onSelectChange}
-              value={mode}>
+            <SomeSelector onChange={this.onSelectChange} value={mode}>
               <SomeSelectorOption value="rawContent">
                 Raw Content
               </SomeSelectorOption>
