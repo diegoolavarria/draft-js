@@ -7,56 +7,46 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  *
  * @providesModule ContentBlock
- * @format
+ * @typechecks
  * @flow
  */
 
 'use strict';
 
-import type {BlockNode, BlockNodeConfig, BlockNodeKey} from 'BlockNode';
+var Immutable = require('immutable');
+
+var findRangesImmutable = require('findRangesImmutable');
+
+import type CharacterMetadata from 'CharacterMetadata';
 import type {DraftBlockType} from 'DraftBlockType';
 import type {DraftInlineStyle} from 'DraftInlineStyle';
 
-const CharacterMetadata = require('CharacterMetadata');
-const Immutable = require('immutable');
-
-const findRangesImmutable = require('findRangesImmutable');
-
-const {List, Map, OrderedSet, Record, Repeat} = Immutable;
+var {
+  List,
+  OrderedSet,
+  Record,
+} = Immutable;
 
 const EMPTY_SET = OrderedSet();
 
-const defaultRecord: BlockNodeConfig = {
+var defaultRecord: {
+  key: string;
+  type: DraftBlockType;
+  text: string;
+  characterList: List<CharacterMetadata>;
+  depth: number;
+} = {
   key: '',
   type: 'unstyled',
   text: '',
   characterList: List(),
   depth: 0,
-  data: Map(),
 };
 
-const ContentBlockRecord = Record(defaultRecord);
+var ContentBlockRecord = Record(defaultRecord);
 
-const decorateCharacterList = (config: BlockNodeConfig): BlockNodeConfig => {
-  if (!config) {
-    return config;
-  }
-
-  const {characterList, text} = config;
-
-  if (text && !characterList) {
-    config.characterList = List(Repeat(CharacterMetadata.EMPTY, text.length));
-  }
-
-  return config;
-};
-
-class ContentBlock extends ContentBlockRecord implements BlockNode {
-  constructor(config: BlockNodeConfig) {
-    super(decorateCharacterList(config));
-  }
-
-  getKey(): BlockNodeKey {
+class ContentBlock extends ContentBlockRecord {
+  getKey(): string {
     return this.get('key');
   }
 
@@ -80,8 +70,22 @@ class ContentBlock extends ContentBlockRecord implements BlockNode {
     return this.get('depth');
   }
 
-  getData(): Map<any, any> {
-    return this.get('data');
+  getParentKey(): string {
+    var key = this.getKey();
+    var parts = key.split('/');
+
+    return parts.slice(0, -1).join('/');
+  }
+
+  hasParent(): boolean {
+    return (this.getParentKey() !== '');
+  }
+
+  getInnerKey(): string {
+    var key = this.getKey();
+    var parts = key.split('/');
+
+    return parts[parts.length - 1];
   }
 
   getInlineStyleAt(offset: number): DraftInlineStyle {
@@ -99,13 +103,13 @@ class ContentBlock extends ContentBlockRecord implements BlockNode {
    */
   findStyleRanges(
     filterFn: (value: CharacterMetadata) => boolean,
-    callback: (start: number, end: number) => void,
+    callback: (start: number, end: number) => void
   ): void {
     findRangesImmutable(
       this.getCharacterList(),
       haveEqualStyle,
       filterFn,
-      callback,
+      callback
     );
   }
 
@@ -114,27 +118,27 @@ class ContentBlock extends ContentBlockRecord implements BlockNode {
    */
   findEntityRanges(
     filterFn: (value: CharacterMetadata) => boolean,
-    callback: (start: number, end: number) => void,
+    callback: (start: number, end: number) => void
   ): void {
     findRangesImmutable(
       this.getCharacterList(),
       haveEqualEntity,
       filterFn,
-      callback,
+      callback
     );
   }
 }
 
 function haveEqualStyle(
   charA: CharacterMetadata,
-  charB: CharacterMetadata,
+  charB: CharacterMetadata
 ): boolean {
   return charA.getStyle() === charB.getStyle();
 }
 
 function haveEqualEntity(
   charA: CharacterMetadata,
-  charB: CharacterMetadata,
+  charB: CharacterMetadata
 ): boolean {
   return charA.getEntity() === charB.getEntity();
 }

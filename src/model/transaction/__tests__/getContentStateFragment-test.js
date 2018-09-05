@@ -7,153 +7,60 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  *
  * @emails oncall+ui_infra
- * @format
  */
 
 'use strict';
 
 jest.disableAutomock();
 
-jest.mock('generateRandomKey');
-
-const ContentBlock = require('ContentBlock');
-const ContentBlockNode = require('ContentBlockNode');
-const ContentState = require('ContentState');
-const EditorState = require('EditorState');
-const Immutable = require('immutable');
-const SelectionState = require('SelectionState');
-
 const getContentStateFragment = require('getContentStateFragment');
+const getSampleStateForTesting = require('getSampleStateForTesting');
+const getSampleStateForTestingNestedBlocks = require('getSampleStateForTestingNestedBlocks');
 
-const {List} = Immutable;
+describe('getContentStateFragment', () => {
+  it('must return a new blockMap with randomized block keys', () => {
+    const {
+      contentState,
+      selectionState,
+    } = getSampleStateForTesting();
 
-const contentBlocks = [
-  new ContentBlock({
-    key: 'A',
-    text: 'Alpha',
-  }),
-  new ContentBlock({
-    key: 'B',
-    text: 'Beta',
-  }),
-  new ContentBlock({
-    key: 'C',
-    text: 'Charlie',
-  }),
-  new ContentBlock({
-    key: 'D',
-    text: 'Delta',
-  }),
-];
+    const selection = selectionState.merge({
+      focusKey: 'c'
+    });
 
-const contentBlockNodes = [
-  new ContentBlockNode({
-    key: 'A',
-    text: 'Alpha',
-    nextSibling: 'B',
-  }),
-  new ContentBlockNode({
-    key: 'B',
-    text: '',
-    children: List(['C']),
-    nextSibling: 'D',
-    prevSibling: 'A',
-  }),
-  new ContentBlockNode({
-    key: 'C',
-    parent: 'B',
-    text: 'Charlie',
-  }),
-  new ContentBlockNode({
-    key: 'D',
-    text: 'Delta',
-    prevSibling: 'B',
-  }),
-];
+    const blockMap = contentState.getBlockMap();
+    const blockKeys = blockMap.keySeq().toArray();
 
-const DEFAULT_SELECTION = {
-  anchorKey: 'A',
-  anchorOffset: 0,
-  focusKey: 'D',
-  focusOffset: 0,
-  isBackward: false,
-};
+    const newBlockMap = getContentStateFragment(contentState, selection);
+    const newKeys = newBlockMap.keySeq().toArray();
 
-const assertGetContentStateFragment = (blocksArray, selection = {}) => {
-  const editor = EditorState.acceptSelection(
-    EditorState.createWithContent(
-      ContentState.createFromBlockArray([...blocksArray]),
-    ),
-    new SelectionState({
-      ...DEFAULT_SELECTION,
-      ...selection,
-    }),
-  );
-
-  expect(
-    getContentStateFragment(
-      editor.getCurrentContent(),
-      editor.getSelection(),
-    ).toJS(),
-  ).toMatchSnapshot();
-};
-
-test('must be able to return all selected contentBlocks', () => {
-  assertGetContentStateFragment(contentBlocks, {
-    focusOffset: contentBlocks[3].getLength(),
+    expect(blockKeys).not.toBe(newKeys);
+    expect(blockMap.first().getText()).toBe(newBlockMap.first().getText());
+    expect(blockMap.skip(1).first().getText()).toBe(newBlockMap.skip(1).first().getText());
+    expect(blockMap.last().getText()).toBe(newBlockMap.last().getText());
+    expect(blockKeys.length).toBe(newKeys.length);
   });
-});
 
-test('must be able to return all selected contentBlockNodes', () => {
-  assertGetContentStateFragment(contentBlockNodes, {
-    focusOffset: contentBlockNodes[3].getLength(),
-  });
-});
+  it('must return a new blockMap with randomized block keys with nesting enabled', () => {
+    const {
+      contentState,
+      selectionState,
+    } = getSampleStateForTestingNestedBlocks();
 
-test('must be able to return contentBlocks selected within', () => {
-  assertGetContentStateFragment(contentBlocks, {
-    anchorKey: 'B',
-    focusKey: 'C',
-    focusOffset: contentBlockNodes[2].getLength(),
-  });
-});
+    const selection = selectionState.merge({
+      focusKey: 'f'
+    });
 
-test('must be able to return contentBlockNodes selected within', () => {
-  assertGetContentStateFragment(contentBlockNodes, {
-    anchorKey: 'B',
-    focusKey: 'C',
-    focusOffset: contentBlockNodes[2].getLength(),
-  });
-});
+    const blockMap = contentState.getBlockMap();
+    const blockKeys = blockMap.keySeq().toArray();
 
-test('must be able to return first ContentBlock selected', () => {
-  assertGetContentStateFragment(contentBlocks, {
-    anchorKey: 'A',
-    focusKey: 'A',
-    focusOffset: contentBlocks[0].getLength(),
-  });
-});
+    const newBlockMap = getContentStateFragment(contentState, selection);
+    const newKeys = newBlockMap.keySeq().toArray();
 
-test('must be able to return first ContentBlockNode selected', () => {
-  assertGetContentStateFragment(contentBlockNodes, {
-    anchorKey: 'A',
-    focusKey: 'A',
-    focusOffset: contentBlockNodes[0].getLength(),
-  });
-});
-
-test('must be able to return last ContentBlock selected', () => {
-  assertGetContentStateFragment(contentBlocks, {
-    anchorKey: 'D',
-    focusKey: 'D',
-    focusOffset: contentBlocks[3].getLength(),
-  });
-});
-
-test('must be able to return last ContentBlockNode selected', () => {
-  assertGetContentStateFragment(contentBlockNodes, {
-    anchorKey: 'D',
-    focusKey: 'D',
-    focusOffset: contentBlockNodes[3].getLength(),
+    expect(blockKeys).not.toBe(newKeys);
+    expect(blockMap.first().getText()).toBe(newBlockMap.first().getText());
+    expect(blockMap.skip(1).first().getText()).toBe(newBlockMap.skip(1).first().getText());
+    expect(blockMap.last().getText()).toBe(newBlockMap.last().getText());
+    expect(blockKeys.length).toBe(newKeys.length);
   });
 });

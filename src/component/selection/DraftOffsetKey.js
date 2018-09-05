@@ -28,10 +28,11 @@ var DraftOffsetKey = {
 
   decode: function(offsetKey: string): DraftOffsetKeyPath {
     var [blockKey, decoratorKey, leafKey] = offsetKey.split(KEY_DELIMITER);
+
     return {
       blockKey,
       decoratorKey: parseInt(decoratorKey, 10),
-      leafKey: parseInt(leafKey, 10),
+      leafKey: parseInt(leafKey, 10)
     };
   },
 };

@@ -7,7 +7,6 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  *
  * @providesModule RawDraftContentBlock
- * @format
  * @flow
  */
 
@@ -22,12 +21,11 @@ import type {InlineStyleRange} from 'InlineStyleRange';
  * attribution repackaged as range objects.
  */
 export type RawDraftContentBlock = {
-  key: ?string,
-  type: DraftBlockType,
-  text: string,
-  depth: ?number,
-  inlineStyleRanges: ?Array<InlineStyleRange>,
-  entityRanges: ?Array<EntityRange>,
-  data?: Object,
-  children?: Array<RawDraftContentBlock>,
+  key: ?string;
+  type: DraftBlockType;
+  text: string;
+  depth: ?number;
+  inlineStyleRanges: ?Array<InlineStyleRange>;
+  entityRanges: ?Array<EntityRange>;
+  blocks: ?Array<RawDraftContentBlock>;
 };

@@ -7,133 +7,129 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  *
  * @emails oncall+ui_infra
- * @format
  */
 
 'use strict';
 
-jest.disableAutomock();
+jest
+  .disableAutomock()
+  .mock('SelectionState');
 
-jest.mock('SelectionState');
+var BlockMapBuilder = require('BlockMapBuilder');
+var ContentBlock = require('ContentBlock');
+var ContentState = require('ContentState');
 
-let contentState;
-
-const BlockMapBuilder = require('BlockMapBuilder');
-const ContentBlock = require('ContentBlock');
-const ContentState = require('ContentState');
-
-const SINGLE_BLOCK = [{text: 'Lorem ipsum', key: 'a'}];
-const MULTI_BLOCK = [
+var SINGLE_BLOCK = [
+  {text: 'Lorem ipsum', key: 'a'},
+];
+var MULTI_BLOCK = [
   {text: 'Four score', key: 'b'},
   {text: 'and seven', key: 'c'},
 ];
+var NESTED_BLOCK = [
+  {text: 'Four score', key: 'd'},
+  {text: 'and seven', key: 'e'},
+  {text: 'Nested in e', key: 'e/f'},
+  {text: 'Nested in e', key: 'e/g'},
+  {text: 'Nested in e/g', key: 'e/g/h'},
+];
 
-const SelectionState = require('SelectionState');
+var SelectionState = require('SelectionState');
 
-const createLink = () => {
-  return contentState.createEntity('LINK', 'MUTABLE', {uri: 'zombo.com'});
-};
+describe('ContentState', () => {
+  function getContentBlocks(textBlocks) {
+    return textBlocks.map(block => new ContentBlock(block));
+  }
 
-const getSample = textBlocks => {
-  const contentBlocks = textBlocks.map(block => new ContentBlock(block));
-  const blockMap = BlockMapBuilder.createFromArray(contentBlocks);
-  return new ContentState({
-    blockMap,
-    selectionBefore: new SelectionState(),
-    selectionAfter: new SelectionState(),
+  function getConfigForText(textBlocks) {
+    var contentBlocks = getContentBlocks(textBlocks);
+    var blockMap = BlockMapBuilder.createFromArray(contentBlocks);
+    return {
+      blockMap,
+      selectionBefore: new SelectionState(),
+      selectionAfter: new SelectionState(),
+    };
+  }
+
+  function getSampleFromConfig(config) {
+    return new ContentState(config);
+  }
+
+  function getSample(textBlocks) {
+    return getSampleFromConfig(
+      getConfigForText(textBlocks)
+    );
+  }
+
+  describe('creation and retrieval', () => {
+    it('must create a new instance', () => {
+      var state = getSample(SINGLE_BLOCK);
+      expect(state instanceof ContentState).toBe(true);
+    });
   });
-};
 
-beforeEach(() => {
-  contentState = ContentState.createFromText('');
-  jest.resetModules();
-});
+  describe('key fetching', () => {
+    it('must succeed or fail properly', () => {
+      var singleBlock = getSample(SINGLE_BLOCK);
+      var key = SINGLE_BLOCK[0].key;
+      expect(singleBlock.getKeyBefore(key)).toBe(undefined);
+      expect(singleBlock.getKeyAfter(key)).toBe(undefined);
 
-test('must create a new instance', () => {
-  const state = getSample(SINGLE_BLOCK);
-  expect(state instanceof ContentState).toMatchSnapshot();
-});
+      var multiBlock = getSample(MULTI_BLOCK);
+      var firstKey = MULTI_BLOCK[0].key;
+      var secondKey = MULTI_BLOCK[1].key;
 
-test('must create properly with an empty block array', () => {
-  const state = ContentState.createFromBlockArray([]);
-  expect(state instanceof ContentState).toMatchSnapshot();
-});
-
-test('key fetching must succeed or fail properly', () => {
-  const singleBlock = getSample(SINGLE_BLOCK);
-  const key = SINGLE_BLOCK[0].key;
-  const multiBlock = getSample(MULTI_BLOCK);
-  const firstKey = MULTI_BLOCK[0].key;
-  const secondKey = MULTI_BLOCK[1].key;
-
-  expect(singleBlock.getKeyAfter(key)).toMatchSnapshot();
-  expect(singleBlock.getKeyBefore(key)).toMatchSnapshot();
-  expect(singleBlock.getKeyAfter(key)).toMatchSnapshot();
-
-  expect(multiBlock.getKeyBefore(firstKey)).toMatchSnapshot();
-  expect(multiBlock.getKeyAfter(firstKey)).toMatchSnapshot();
-  expect(multiBlock.getKeyBefore(secondKey)).toMatchSnapshot();
-  expect(multiBlock.getKeyAfter(secondKey)).toMatchSnapshot();
-});
-
-test('block fetching must retrieve or fail fetching block for key', () => {
-  const state = getSample(SINGLE_BLOCK);
-  const block = state.getBlockForKey('a');
-
-  expect(block instanceof ContentBlock).toMatchSnapshot();
-  expect(block.getText()).toMatchSnapshot();
-  expect(state.getBlockForKey('x')).toMatchSnapshot();
-});
-
-test('must create entities instances', () => {
-  const contentState = createLink();
-  expect(typeof contentState.getLastCreatedEntityKey()).toMatchSnapshot();
-});
-
-test('must retrieve an entities instance given a key', () => {
-  const contentState = createLink();
-  const retrieved = contentState.getEntity(
-    contentState.getLastCreatedEntityKey(),
-  );
-  expect(retrieved.toJS()).toMatchSnapshot();
-});
-
-test('must throw when retrieving entities for an invalid key', () => {
-  const contentState = createLink();
-  expect(() => contentState.getEntity('asdfzxcvqweriuop')).toThrow();
-  expect(() => contentState.getEntity(null)).toThrow();
-});
-
-test('must merge entities data', () => {
-  const contentState = createLink();
-  const key = contentState.getLastCreatedEntityKey();
-
-  // Merge new property.
-  const contentStateWithNewProp = contentState.mergeEntityData(key, {
-    foo: 'bar',
+      expect(multiBlock.getKeyBefore(firstKey)).toBe(undefined);
+      expect(multiBlock.getKeyAfter(firstKey)).toBe(secondKey);
+      expect(multiBlock.getKeyBefore(secondKey)).toBe(firstKey);
+      expect(multiBlock.getKeyAfter(secondKey)).toBe(undefined);
+    });
   });
-  const updatedEntity = contentStateWithNewProp.getEntity(key);
 
-  // Replace existing property.
-  const contentStateWithUpdatedProp = contentStateWithNewProp.mergeEntityData(
-    key,
-    {uri: 'homestarrunner.com'},
-  );
-  const entityWithNewURI = contentStateWithUpdatedProp.getEntity(key);
-
-  expect(updatedEntity.getData()).toMatchSnapshot();
-  expect(entityWithNewURI.getData()).toMatchSnapshot();
-});
-
-test('must replace entities data', () => {
-  const contentState = createLink();
-  const key = contentState.getLastCreatedEntityKey();
-
-  const updatedContentState = contentState.replaceEntityData(key, {
-    uri: 'something.com',
-    newProp: 'baz',
+  describe('block fetching', () => {
+    it('must retrieve or fail fetching block for key', () => {
+      var state = getSample(SINGLE_BLOCK);
+      var block = state.getBlockForKey('a');
+      expect(block instanceof ContentBlock).toBe(true);
+      expect(block.getText()).toBe(SINGLE_BLOCK[0].text);
+      expect(state.getBlockForKey('x')).toBe(undefined);
+    });
   });
-  const entityWithReplacedData = updatedContentState.getEntity(key);
 
-  expect(entityWithReplacedData.getData()).toMatchSnapshot();
+  describe('nested block fetching', () => {
+    it('must retrieve nested block for key', () => {
+      var state = getSample(NESTED_BLOCK);
+      var blocks = state.getBlockChildren('e');
+
+      expect(blocks.size).toBe(2);
+      expect(blocks.has('e/f')).toBe(true);
+      expect(blocks.has('e/g')).toBe(true);
+    });
+
+    it('must retrieve nested block for a deeper key', () => {
+      var state = getSample(NESTED_BLOCK);
+      var blocks = state.getBlockChildren('e/g');
+
+      expect(blocks.size).toBe(1);
+      expect(blocks.has('e/g/h')).toBe(true);
+    });
+
+    it('must return an empty map if none', () => {
+      var state = getSample(NESTED_BLOCK);
+      var blocks = state.getBlockChildren('d');
+
+      expect(blocks.size).toBe(0);
+    });
+  });
+
+  describe('first level block fetching', () => {
+    it('must retrieve first level block', () => {
+      var state = getSample(NESTED_BLOCK);
+      var blocks = state.getFirstLevelBlocks();
+
+      expect(blocks.size).toBe(2);
+      expect(blocks.has('d')).toBe(true);
+      expect(blocks.has('e')).toBe(true);
+    });
+  });
 });

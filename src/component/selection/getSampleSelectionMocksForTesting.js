@@ -7,27 +7,38 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  *
  * @providesModule getSampleSelectionMocksForTesting
+ * @typechecks
+ * @flow
  */
+
 
 'use strict';
 
-const CharacterMetadata = require('CharacterMetadata');
-const ContentBlock = require('ContentBlock');
-const ContentState = require('ContentState');
-const EditorState = require('EditorState');
-const Immutable = require('immutable');
+var CharacterMetadata = require('CharacterMetadata');
+var ContentBlock = require('ContentBlock');
+var ContentState = require('ContentState');
+var EditorState = require('EditorState');
+var Immutable = require('immutable');
 
-const {BOLD} = require('SampleDraftInlineStyle');
-const {EMPTY} = CharacterMetadata;
+var {BOLD} = require('SampleDraftInlineStyle');
+var {EMPTY} = CharacterMetadata;
 
-const getSampleSelectionMocksForTesting = (): Object => {
-  const root = document.createElement('div');
-  const contents = document.createElement('div');
+function getSampleSelectionMocksForTesting() {
+  var editorState;
+  var root;
+  var contents;
+  var blocks;
+  var decorators;
+  var leafs;
+  var leafChildren;
+  var textNodes;
 
+  root = document.createElement('div');
+  contents = document.createElement('div');
   contents.setAttribute('data-contents', 'true');
   root.appendChild(contents);
 
-  const text = [
+  var text = [
     'Washington',
     'Jefferson',
     'Lincoln',
@@ -36,33 +47,30 @@ const getSampleSelectionMocksForTesting = (): Object => {
     'Obama',
   ];
 
-  const textA = text[0] + text[1];
-  const textB = text[2] + text[3];
-  const textC = text[4] + text[5];
+  var textA = text[0] + text[1];
+  var textB = text[2] + text[3];
+  var textC = text[4] + text[5];
 
-  const boldChar = CharacterMetadata.create({
-    style: BOLD,
+  var boldChar = CharacterMetadata.create({
+    style: BOLD
   });
-
-  const aChars = Immutable.List(
+  var aChars = Immutable.List(
     Immutable.Repeat(EMPTY, text[0].length).concat(
-      Immutable.Repeat(boldChar, text[1].length),
-    ),
+      Immutable.Repeat(boldChar, text[1].length)
+    )
   );
-
-  const bChars = Immutable.List(
+  var bChars = Immutable.List(
     Immutable.Repeat(EMPTY, text[2].length).concat(
-      Immutable.Repeat(boldChar, text[3].length),
-    ),
+      Immutable.Repeat(boldChar, text[3].length)
+    )
   );
-
-  const cChars = Immutable.List(
+  var cChars = Immutable.List(
     Immutable.Repeat(EMPTY, text[4].length).concat(
-      Immutable.Repeat(boldChar, text[5].length),
-    ),
+      Immutable.Repeat(boldChar, text[5].length)
+    )
   );
 
-  const contentBlocks = [
+  var contentBlocks = [
     new ContentBlock({
       key: 'a',
       type: 'unstyled',
@@ -83,53 +91,56 @@ const getSampleSelectionMocksForTesting = (): Object => {
     }),
   ];
 
-  const contentState = ContentState.createFromBlockArray(contentBlocks);
-  const editorState = EditorState.createWithContent(contentState);
+  var contentState = ContentState.createFromBlockArray(contentBlocks);
+  editorState = EditorState.createWithContent(contentState);
 
-  const textNodes = text.map(text => {
-    return document.createTextNode(text);
-  });
-
-  const leafChildren = textNodes.map(textNode => {
-    const span = document.createElement('span');
-    span.appendChild(textNode);
-    return span;
-  });
-
-  const leafs = ['a-0-0', 'a-0-1', 'b-0-0', 'b-0-1', 'c-0-0', 'c-0-1'].map(
-    (blockKey, index) => {
-      const span = document.createElement('span');
-      span.setAttribute('data-offset-key', '' + blockKey);
-      span.appendChild(leafChildren[index]);
-      return span;
-    },
+  textNodes = text
+    .map(
+      function(text) {
+        return document.createTextNode(text);
+      }
+    );
+  leafChildren = textNodes
+    .map(
+      function(textNode) {
+        var span = document.createElement('span');
+        span.appendChild(textNode);
+        return span;
+      }
+    );
+  leafs = ['a-0-0', 'a-0-1', 'b-0-0', 'b-0-1', 'c-0-0', 'c-0-1']
+    .map(
+      function(blockKey, ii) {
+        var span = document.createElement('span');
+        span.setAttribute('data-offset-key', '' + blockKey);
+        span.appendChild(leafChildren[ii]);
+        return span;
+      }
+    );
+  decorators = ['a-0-0', 'b-0-0', 'c-0-0']
+    .map(
+      function(decoratorKey, ii) {
+        var span = document.createElement('span');
+        span.setAttribute('data-offset-key', '' + decoratorKey);
+        span.appendChild(leafs[(ii * 2)]);
+        span.appendChild(leafs[(ii * 2) + 1]);
+        return span;
+      }
+    );
+  blocks = ['a-0-0', 'b-0-0', 'c-0-0']
+    .map(
+      function(blockKey, ii) {
+        var blockElement = document.createElement('div');
+        blockElement.setAttribute('data-offset-key', '' + blockKey);
+        blockElement.appendChild(decorators[ii]);
+        return blockElement;
+      }
+    );
+  blocks.forEach(
+    function(blockElem) {
+      contents.appendChild(blockElem);
+    }
   );
-
-  const decorators = ['a-0-0', 'b-0-0', 'c-0-0'].map((decoratorKey, index) => {
-    const span = document.createElement('span');
-    span.setAttribute('data-offset-key', '' + decoratorKey);
-    span.appendChild(leafs[index * 2]);
-    span.appendChild(leafs[index * 2 + 1]);
-    return span;
-  });
-
-  const blocks = ['a-0-0', 'b-0-0', 'c-0-0'].map((blockKey, index) => {
-    const outerBlockElement = document.createElement('div');
-    const innerBlockElement = document.createElement('div');
-
-    innerBlockElement.setAttribute('data-offset-key', '' + blockKey);
-    innerBlockElement.appendChild(decorators[index]);
-
-    outerBlockElement.setAttribute('data-offset-key', '' + blockKey);
-    outerBlockElement.setAttribute('data-block', 'true');
-    outerBlockElement.appendChild(innerBlockElement);
-
-    return outerBlockElement;
-  });
-
-  blocks.forEach(blockElem => {
-    contents.appendChild(blockElem);
-  });
 
   return {
     editorState,
@@ -139,8 +150,8 @@ const getSampleSelectionMocksForTesting = (): Object => {
     decorators,
     leafs,
     leafChildren,
-    textNodes,
+    textNodes
   };
-};
+}
 
 module.exports = getSampleSelectionMocksForTesting;

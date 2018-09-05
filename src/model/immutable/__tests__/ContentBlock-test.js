@@ -7,97 +7,128 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  *
  * @emails oncall+ui_infra
- * @format
  */
 
 'use strict';
 
 jest.disableAutomock();
 
-const CharacterMetadata = require('CharacterMetadata');
-const ContentBlock = require('ContentBlock');
-const Immutable = require('immutable');
-const {BOLD} = require('SampleDraftInlineStyle');
+var CharacterMetadata = require('CharacterMetadata');
+var ContentBlock = require('ContentBlock');
+var Immutable = require('immutable');
 
-const ENTITY_KEY = 'x';
+var {
+  NONE,
+  BOLD,
+} = require('SampleDraftInlineStyle');
 
-const getSampleBlock = () => {
-  return new ContentBlock({
-    key: 'a',
-    type: 'unstyled',
-    text: 'Alpha',
-    characterList: Immutable.List.of(
-      CharacterMetadata.create({style: BOLD, entity: ENTITY_KEY}),
-      CharacterMetadata.EMPTY,
-      CharacterMetadata.EMPTY,
-      CharacterMetadata.create({style: BOLD}),
-      CharacterMetadata.create({entity: ENTITY_KEY}),
-    ),
-  });
-};
+describe('ContentBlock', () => {
+  var ENTITY_KEY = 'x';
 
-test('must have appropriate default values', () => {
-  const text = 'Alpha';
-  const block = new ContentBlock({
-    key: 'a',
-    type: 'unstyled',
-    text,
-  });
-
-  expect(block.getKey()).toMatchSnapshot();
-  expect(block.getText()).toMatchSnapshot();
-  expect(block.getType()).toMatchSnapshot();
-  expect(block.getLength()).toMatchSnapshot();
-  expect(block.getCharacterList().count()).toMatchSnapshot();
-  expect(block.getCharacterList().toJS()).toMatchSnapshot();
-});
-
-test('must provide default values', () => {
-  const block = new ContentBlock();
-  expect(block.getType()).toMatchSnapshot();
-  expect(block.getText()).toMatchSnapshot();
-  expect(
-    Immutable.is(block.getCharacterList(), Immutable.List()),
-  ).toMatchSnapshot();
-});
-
-test('must retrieve properties', () => {
-  const block = getSampleBlock();
-  expect(block.getKey()).toMatchSnapshot();
-  expect(block.getText()).toMatchSnapshot();
-  expect(block.getType()).toMatchSnapshot();
-  expect(block.getLength()).toMatchSnapshot();
-  expect(block.getCharacterList().count()).toMatchSnapshot();
-});
-
-test('must properly retrieve style at offset', () => {
-  const block = getSampleBlock();
-
-  for (let i = 0; i <= 4; i++) {
-    expect(block.getInlineStyleAt(i).toJS()).toMatchSnapshot();
+  function getSampleBlock() {
+    return new ContentBlock({
+      key: 'a',
+      type: 'unstyled',
+      text: 'Alpha',
+      characterList: Immutable.List.of(
+        CharacterMetadata.create({style: BOLD, entity: ENTITY_KEY}),
+        CharacterMetadata.EMPTY,
+        CharacterMetadata.EMPTY,
+        CharacterMetadata.create({style: BOLD}),
+        CharacterMetadata.create({entity: ENTITY_KEY})
+      ),
+    });
   }
-});
 
-test('must correctly identify ranges of styles', () => {
-  const block = getSampleBlock();
-  const cb = jest.fn();
-  block.findStyleRanges(() => true, cb);
+  describe('basic retrieval', () => {
+    it('must provide default values', () => {
+      var block = new ContentBlock();
+      expect(block.getType()).toBe('unstyled');
+      expect(block.getText()).toBe('');
+      expect(
+        Immutable.is(block.getCharacterList(), Immutable.List())
+      ).toBe(true);
+    });
 
-  expect(cb.mock.calls).toMatchSnapshot();
-});
+    it('must retrieve properties', () => {
+      var block = getSampleBlock();
+      expect(block.getKey()).toBe('a');
+      expect(block.getText()).toBe('Alpha');
+      expect(block.getType()).toBe('unstyled');
+      expect(block.getLength()).toBe(5);
+      expect(block.getCharacterList().count()).toBe(5);
+    });
+  });
 
-test('must properly retrieve entity at offset', () => {
-  const block = getSampleBlock();
+  describe('style retrieval', () => {
+    it('must properly retrieve style at offset', () => {
+      var block = getSampleBlock();
+      expect(block.getInlineStyleAt(0)).toBe(BOLD);
+      expect(block.getInlineStyleAt(1)).toBe(NONE);
+      expect(block.getInlineStyleAt(2)).toBe(NONE);
+      expect(block.getInlineStyleAt(3)).toBe(BOLD);
+      expect(block.getInlineStyleAt(4)).toBe(NONE);
+    });
 
-  for (let i = 0; i <= 4; i++) {
-    expect(block.getEntityAt(i)).toMatchSnapshot();
-  }
-});
+    it('must correctly identify ranges of styles', () => {
+      var block = getSampleBlock();
+      var cb = jest.fn();
+      block.findStyleRanges(() => true, cb);
 
-test('must correctly identify ranges of entities', () => {
-  const block = getSampleBlock();
-  const cb = jest.fn();
-  block.findEntityRanges(() => true, cb);
+      var calls = cb.mock.calls;
+      expect(calls.length).toBe(4);
+      expect(calls[0]).toEqual([0, 1]);
+      expect(calls[1]).toEqual([1, 3]);
+      expect(calls[2]).toEqual([3, 4]);
+      expect(calls[3]).toEqual([4, 5]);
+    });
+  });
 
-  expect(cb.mock.calls).toMatchSnapshot();
+  describe('entity retrieval', () => {
+    it('must properly retrieve entity at offset', () => {
+      var block = getSampleBlock();
+      expect(block.getEntityAt(0)).toBe(ENTITY_KEY);
+      expect(block.getEntityAt(1)).toBe(null);
+      expect(block.getEntityAt(2)).toBe(null);
+      expect(block.getEntityAt(3)).toBe(null);
+      expect(block.getEntityAt(4)).toBe(ENTITY_KEY);
+    });
+
+    it('must correctly identify ranges of entities', () => {
+      var block = getSampleBlock();
+      var cb = jest.fn();
+      block.findEntityRanges(() => true, cb);
+
+      var calls = cb.mock.calls;
+      expect(calls.length).toBe(3);
+      expect(calls[0]).toEqual([0, 1]);
+      expect(calls[1]).toEqual([1, 4]);
+      expect(calls[2]).toEqual([4, 5]);
+    });
+  });
+
+  describe('parent key retrieval', () => {
+    it('must properly retrieve key of parent if first level', () => {
+      var block = getSampleBlock();
+      expect(block.getParentKey()).toBe('');
+    });
+
+    it('must properly retrieve key of parent if nested', () => {
+      var block = new ContentBlock({
+        key: 'a/b',
+        type: 'unstyled',
+        text: ''
+      });
+      expect(block.getParentKey()).toBe('a');
+    });
+
+    it('must properly retrieve key of parent if deep nested', () => {
+      var block = new ContentBlock({
+        key: 'a/b/b',
+        type: 'unstyled',
+        text: ''
+      });
+      expect(block.getParentKey()).toBe('a/b');
+    });
+  });
 });

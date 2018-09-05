@@ -29,12 +29,14 @@ const DraftEntityInstance = require('DraftEntityInstance');
 const EditorState = require('EditorState');
 const KeyBindingUtil = require('KeyBindingUtil');
 const RichTextEditorUtil = require('RichTextEditorUtil');
+const NestedTextEditorUtil = require('NestedTextEditorUtil');
 const SelectionState = require('SelectionState');
 
 const convertFromDraftStateToRaw = require('convertFromDraftStateToRaw');
 const convertFromHTMLToContentBlocks = require('convertFromHTMLToContentBlocks');
 const convertFromRawToDraftState = require('convertFromRawToDraftState');
 const generateRandomKey = require('generateRandomKey');
+const generateNestedKey = require('generateNestedKey');
 const getDefaultKeyBinding = require('getDefaultKeyBinding');
 const getVisibleSelectionRect = require('getVisibleSelectionRect');
 
@@ -57,6 +59,7 @@ const DraftPublic = {
   KeyBindingUtil,
   Modifier: DraftModifier,
   RichUtils: RichTextEditorUtil,
+  NestedUtils: NestedTextEditorUtil,
 
   DefaultDraftBlockRenderMap,
   DefaultDraftInlineStyle,
@@ -65,6 +68,7 @@ const DraftPublic = {
   convertFromRaw: convertFromRawToDraftState,
   convertToRaw: convertFromDraftStateToRaw,
   genKey: generateRandomKey,
+  genNestedKey: generateNestedKey,
   getDefaultKeyBinding,
   getVisibleSelectionRect,
 };

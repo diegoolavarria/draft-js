@@ -7,70 +7,77 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  *
  * @providesModule getContentStateFragment
- * @format
+ * @typechecks
  * @flow
  */
 
 'use strict';
 
+var randomizeBlockMapKeys = require('randomizeBlockMapKeys');
+var removeEntitiesAtEdges = require('removeEntitiesAtEdges');
+
 import type {BlockMap} from 'BlockMap';
 import type ContentState from 'ContentState';
 import type SelectionState from 'SelectionState';
 
-const randomizeBlockMapKeys = require('randomizeBlockMapKeys');
-const removeEntitiesAtEdges = require('removeEntitiesAtEdges');
-
-const getContentStateFragment = (
+function getContentStateFragment(
   contentState: ContentState,
-  selectionState: SelectionState,
-): BlockMap => {
-  const startKey = selectionState.getStartKey();
-  const startOffset = selectionState.getStartOffset();
-  const endKey = selectionState.getEndKey();
-  const endOffset = selectionState.getEndOffset();
+  selectionState: SelectionState
+): BlockMap {
+  var startKey = selectionState.getStartKey();
+  var startOffset = selectionState.getStartOffset();
+  var endKey = selectionState.getEndKey();
+  var endOffset = selectionState.getEndOffset();
 
   // Edge entities should be stripped to ensure that we don't preserve
   // invalid partial entities when the fragment is reused. We do, however,
   // preserve entities that are entirely within the selection range.
-  const contentWithoutEdgeEntities = removeEntitiesAtEdges(
+  var contentWithoutEdgeEntities = removeEntitiesAtEdges(
     contentState,
-    selectionState,
+    selectionState
   );
 
-  const blockMap = contentWithoutEdgeEntities.getBlockMap();
-  const blockKeys = blockMap.keySeq();
-  const startIndex = blockKeys.indexOf(startKey);
-  const endIndex = blockKeys.indexOf(endKey) + 1;
+  var blockMap = contentWithoutEdgeEntities.getBlockMap();
 
-  return randomizeBlockMapKeys(
-    blockMap.slice(startIndex, endIndex).map((block, blockKey) => {
-      const text = block.getText();
-      const chars = block.getCharacterList();
+  var randomizedBlockMapKeys = randomizeBlockMapKeys(blockMap);
 
-      if (startKey === endKey) {
-        return block.merge({
-          text: text.slice(startOffset, endOffset),
-          characterList: chars.slice(startOffset, endOffset),
-        });
-      }
+  var randomizedBlockKeys = randomizedBlockMapKeys.keySeq();
+  var blockKeys = blockMap.keySeq();
 
-      if (blockKey === startKey) {
-        return block.merge({
-          text: text.slice(startOffset),
-          characterList: chars.slice(startOffset),
-        });
-      }
+  var startIndex = blockKeys.indexOf(startKey);
+  var endIndex = blockKeys.indexOf(endKey) + 1;
 
-      if (blockKey === endKey) {
-        return block.merge({
-          text: text.slice(0, endOffset),
-          characterList: chars.slice(0, endOffset),
-        });
-      }
+  var slice = randomizedBlockMapKeys.slice(startIndex, endIndex).map((block, blockKey) => {
+    var keyIndex = randomizedBlockKeys.indexOf(blockKey);
 
-      return block;
-    }),
-  );
-};
+    var text = block.getText();
+    var chars = block.getCharacterList();
+
+    if (startKey === endKey) {
+      return block.merge({
+        text: text.slice(startOffset, endOffset),
+        characterList: chars.slice(startOffset, endOffset),
+      });
+    }
+
+    if (keyIndex === startIndex) {
+      return block.merge({
+        text: text.slice(startOffset),
+        characterList: chars.slice(startOffset),
+      });
+    }
+
+    if (keyIndex === endIndex) {
+      return block.merge({
+        text: text.slice(0, endOffset),
+        characterList: chars.slice(0, endOffset),
+      });
+    }
+
+    return block;
+  });
+
+  return slice.toOrderedMap();
+}
 
 module.exports = getContentStateFragment;
